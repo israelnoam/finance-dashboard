@@ -168,6 +168,25 @@ def get_google_credentials():
     Returns:
         google.oauth2.credentials.Credentials or service_account.Credentials.
     """
+    # 0. Check Streamlit Cloud Secrets (for 24/7 cloud hosting)
+    try:
+        import streamlit as st
+        if hasattr(st, "secrets"):
+            if "gcp_service_account" in st.secrets:
+                sa_info = dict(st.secrets["gcp_service_account"])
+                return service_account.Credentials.from_service_account_info(sa_info, scopes=SCOPES)
+            if "google_oauth_token" in st.secrets:
+                token_info = dict(st.secrets["google_oauth_token"])
+                creds = Credentials.from_authorized_user_info(token_info, scopes=SCOPES)
+                if creds and creds.expired and creds.refresh_token:
+                    try:
+                        creds.refresh(Request())
+                    except Exception:
+                        pass
+                return creds
+    except Exception as e:
+        print(f"Notice: st.secrets check encountered: {e}")
+
     # 1. Prefer Service Account JSON if present (ideal for 24/7 mobile sync)
     sa_path = find_service_account_file()
     if sa_path:
@@ -208,6 +227,13 @@ def get_google_credentials():
 
 def is_authenticated():
     """Check if valid service account or refreshable OAuth credentials currently exist."""
+    try:
+        import streamlit as st
+        if hasattr(st, "secrets") and ("gcp_service_account" in st.secrets or "google_oauth_token" in st.secrets):
+            return True
+    except Exception:
+        pass
+
     if find_service_account_file():
         return True
     if not os.path.exists(TOKEN_FILE):
