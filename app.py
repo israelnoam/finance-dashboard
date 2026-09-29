@@ -19,6 +19,7 @@ import socket
 import asyncio
 import concurrent.futures
 import urllib.request
+import math
 from datetime import datetime, date, timezone, timedelta
 from dateutil.relativedelta import relativedelta
 import pandas as pd
@@ -1489,6 +1490,67 @@ def render_market_insights_tab():
             st.markdown("</div>", unsafe_allow_html=True)
 
 
+def render_svg_donut(cat_summary, cat_color_map, total_expense, is_dark=True):
+    """
+    Renders a native, ultra-responsive SVG Donut Chart with zero external JS dependencies.
+    Eliminates mobile WebKit / Cloudflare tunnel 'TypeError: importing a module script failed' errors.
+    """
+    cx, cy, r_out, r_in = 110, 110, 95, 58
+    paths = []
+    start_angle = -math.pi / 2
+    sum_amt = float(cat_summary["Amount"].sum()) if not cat_summary.empty else 0.0
+    if sum_amt <= 0:
+        sum_amt = 1.0
+
+    border_color = "#14141e" if is_dark else "#ffffff"
+    center_bg = "#181824" if is_dark else "#ffffff"
+    sub_color = "#94a3b8" if is_dark else "#64748b"
+    val_color = "#f8fafc" if is_dark else "#0f172a"
+
+    if len(cat_summary) == 1:
+        row = cat_summary.iloc[0]
+        col = cat_color_map.get(row["Category"], "#2563eb")
+        paths.append(f'<circle cx="{cx}" cy="{cy}" r="{(r_out + r_in) / 2}" fill="none" stroke="{col}" stroke-width="{r_out - r_in}" />')
+    else:
+        for _, row in cat_summary.iterrows():
+            amt = float(row["Amount"])
+            cat = str(row["Category"])
+            col = cat_color_map.get(cat, "#3b82f6")
+            angle = (amt / sum_amt) * 2 * math.pi
+            if angle <= 0.001:
+                continue
+            end_angle = start_angle + angle
+
+            x1 = cx + r_out * math.cos(start_angle)
+            y1 = cy + r_out * math.sin(start_angle)
+            x2 = cx + r_out * math.cos(end_angle)
+            y2 = cy + r_out * math.sin(end_angle)
+
+            x3 = cx + r_in * math.cos(end_angle)
+            y3 = cy + r_in * math.sin(end_angle)
+            x4 = cx + r_in * math.cos(start_angle)
+            y4 = cy + r_in * math.sin(start_angle)
+
+            large_arc = 1 if angle > math.pi else 0
+
+            d = f"M {x1:.2f} {y1:.2f} A {r_out} {r_out} 0 {large_arc} 1 {x2:.2f} {y2:.2f} L {x3:.2f} {y3:.2f} A {r_in} {r_in} 0 {large_arc} 0 {x4:.2f} {y4:.2f} Z"
+            pct = (amt / sum_amt) * 100
+            paths.append(f'<path d="{d}" fill="{col}" stroke="{border_color}" stroke-width="2.5"><title>{cat}: ₪{amt:,.2f} ({pct:.1f}%)</title></path>')
+            start_angle = end_angle
+
+    svg_content = f"""
+    <div style="display: flex; justify-content: center; align-items: center; padding: 0.5rem 0;">
+        <svg viewBox="0 0 220 220" width="220" height="220" style="display:block; max-width:100%; height:auto; filter: drop-shadow(0 4px 10px rgba(0,0,0,0.25));">
+            {''.join(paths)}
+            <circle cx="{cx}" cy="{cy}" r="{r_in - 1}" fill="{center_bg}" />
+            <text x="{cx}" y="{cy - 8}" text-anchor="middle" font-size="10" font-weight="600" fill="{sub_color}" font-family="Inter, -apple-system, sans-serif" letter-spacing="0.05em">TOTAL EXPENSE</text>
+            <text x="{cx}" y="{cy + 13}" text-anchor="middle" font-size="16" font-weight="800" fill="{val_color}" font-family="'JetBrains Mono', monospace">₪{total_expense:,.0f}</text>
+        </svg>
+    </div>
+    """
+    return svg_content
+
+
 # --- Main Dashboard Logic ---
 
 def main():
@@ -1945,71 +2007,33 @@ def main():
                             del st.session_state["pie_chart_selection"]
                         st.rerun()
 
-                    # --- CENTERED DONUT CHART ---
-                    st.markdown("<div class='chart-box' style='padding: 0.8rem 0.5rem 0.5rem 0.5rem;'>", unsafe_allow_html=True)
+                    # --- CENTERED DONUT CHART (Native SVG - 0 MB JS, Instant Mobile Rendering) ---
+                    st.markdown("<div class='chart-box' style='padding: 0.8rem 0.5rem 0.7rem 0.5rem;'>", unsafe_allow_html=True)
                     st.markdown(f"<h4 style='margin-top:0; margin-bottom:0.2rem; font-size:1.05rem; color:{chart_title_color}; text-align:center;'>🍩 Expense Distribution</h4>", unsafe_allow_html=True)
 
-                    fig_donut = px.pie(
-                        cat_summary,
-                        values="Amount",
-                        names="Category",
-                        hole=0.62,
-                        color="Category",
-                        color_discrete_map=cat_color_map
-                    )
-                    fig_donut.update_traces(
-                        textposition='inside',
-                        textinfo='percent',
-                        insidetextfont=dict(color="#ffffff", family="Inter, -apple-system, sans-serif", size=11),
-                        marker=dict(line=dict(color=donut_border, width=2)),
-                        hovertemplate="<b>%{label}</b><br>Amount: ₪%{value:,.2f}<br>Share: %{percent}<extra></extra>"
-                    )
-                    fig_donut.update_layout(
-                        template="plotly_dark" if is_dark else "plotly_white",
-                        showlegend=False,
-                        height=270,
-                        margin=dict(t=10, b=10, l=10, r=10),
-                        paper_bgcolor="rgba(0,0,0,0)",
-                        plot_bgcolor="rgba(0,0,0,0)",
-                        font=dict(color=chart_font_color, family="Inter, -apple-system, sans-serif", size=12),
-                        hoverlabel=dict(
-                            bgcolor="#1c1c28" if is_dark else "#ffffff",
-                            font_color="#f3f4f6" if is_dark else "#0f172a",
-                            font_size=12,
-                            font_family="Inter, -apple-system, sans-serif",
-                            bordercolor=donut_border
-                        ),
-                        annotations=[
-                            dict(
-                                text=f"<span style='font-size:10px; font-weight:600; letter-spacing:0.04em; color:{chart_font_color};'>TOTAL EXPENSE</span><br><b style='font-size:18px; color:{chart_title_color};'>₪{expense_total:,.0f}</b>",
-                                x=0.5, y=0.5,
-                                font_size=13,
-                                font_family="Inter, -apple-system, sans-serif",
-                                showarrow=False
-                            )
-                        ]
-                    )
+                    # 100% Native vector SVG chart: 1.1 KB payload, zero Javascript chunks, zero TypeError import failures
+                    donut_svg_html = render_svg_donut(cat_summary, cat_color_map, expense_total, is_dark=is_dark)
+                    st.markdown(donut_svg_html, unsafe_allow_html=True)
 
-                    pie_event = st.plotly_chart(
-                        fig_donut,
-                        use_container_width=True,
-                        on_select="rerun",
-                        selection_mode="points",
-                        key="pie_chart_selection"
-                    )
-                    if pie_event and isinstance(pie_event, dict):
-                        pts = pie_event.get("selection", {}).get("points", [])
-                        if pts:
-                            p0 = pts[0]
-                            clicked_cat = p0.get("label") or p0.get("customdata")
-                            if not clicked_cat and "point_number" in p0 and p0["point_number"] < len(cat_summary):
-                                clicked_cat = cat_summary.iloc[p0["point_number"]]["Category"]
-                            if clicked_cat and clicked_cat in cat_summary["Category"].values and clicked_cat != active_cat:
-                                st.session_state["drilldown_category"] = clicked_cat
-                                if pill_key in st.session_state:
-                                    st.session_state[pill_key] = clicked_cat
-                                st.rerun()
-
+                    # Category Share Breakdown Badges
+                    chips_html = ["<div style='display:flex; flex-wrap:wrap; justify-content:center; gap:0.4rem; margin-top:0.3rem; margin-bottom:0.1rem;'>"]
+                    for _, r in cat_summary.iterrows():
+                        c_name = r["Category"]
+                        c_col = cat_color_map.get(c_name, "#3b82f6")
+                        c_amt = r["Amount"]
+                        c_pct = r["Pct"]
+                        is_active_chip = (c_name == active_cat)
+                        border_css = f"border: 2px solid {c_col}; background: rgba(59,130,246,0.12);" if is_active_chip else f"border: 1px solid rgba(255,255,255,0.08); background: rgba(255,255,255,0.02);"
+                        chips_html.append(f"""
+                            <div style="{border_css} border-radius: 20px; padding: 0.25rem 0.65rem; display: flex; align-items: center; gap: 0.35rem; font-size: 0.8rem;">
+                                <span style="display:inline-block; width:8px; height:8px; border-radius:50%; background-color:{c_col};"></span>
+                                <span style="color:{chart_title_color}; font-weight:600;">{c_name}</span>
+                                <span style="color:{c_col}; font-weight:700; font-family:'JetBrains Mono',monospace;">₪{c_amt:,.0f}</span>
+                                <span style="color:#94a3b8; font-size:0.74rem;">({c_pct:.0f}%)</span>
+                            </div>
+                        """)
+                    chips_html.append("</div>")
+                    st.markdown("".join(chips_html), unsafe_allow_html=True)
                     st.markdown("</div>", unsafe_allow_html=True)
 
                     # --- ISOLATED CATEGORY DRILLDOWN TABLE & CARDS ---
