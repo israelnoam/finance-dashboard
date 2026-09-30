@@ -254,3 +254,10 @@ def logout():
         except Exception:
             return False
     return False
+
+
+if __name__ == "__main__":
+    # Fallback entrypoint when auth.py is executed as the main module (e.g. on Streamlit Cloud)
+    import app
+    app.main()
+
