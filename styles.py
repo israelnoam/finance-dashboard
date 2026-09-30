@@ -287,6 +287,8 @@ def get_custom_css(theme: str = "dark") -> str:
             padding: 1.1rem 1.3rem;
             margin-bottom: 1rem;
             box-shadow: {card_shadow};
+            direction: rtl !important;
+            text-align: right !important;
             transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
         }}
         .insight-card:hover {{

@@ -16,6 +16,7 @@ from bidi.algorithm import get_display
 # Keyword category mapping dictionary
 CATEGORY_KEYWORDS = {
     "Shopping": [
+        "בהצדעה", "כרטיס נטען בהצדעה", "פי הקריון", "קריון", "piitel", "paypal piitel",
         "ביליבונג", "billabong", "זארה", "zara", "castro", "קסטרו", "h&m", "pull&bear", "bershka",
         "terminal x", "טרמינל", "asos", "amazon", "אמזון", "aliexpress",
         "shein", "עלי אקספרס", "nike", "adidas", "איקאה", "ikea", "ksp",
@@ -68,7 +69,8 @@ CATEGORY_KEYWORDS = {
         "חברת החשמל", "חשמל", "ארנונה", "עיריית", "מים", "מי אביבים",
         "הוט", "hot", "יס", "yes", "בזק", "bezeq", "פרטנר", "partner",
         "סלקום", "cellcom", "פלאפון", "pelephone", "012", "019", "גז",
-        "היפרטרוניקס", "ביטוח", "מ.התחבורה", "שדה תעופה", "נתבג", "נתב\"ג"
+        "היפרטרוניקס", "ביטוח", "מ.התחבורה", "שדה תעופה", "נתבג", "נתב\"ג",
+        "שלומי בן שיטרית", "שיטרית", "שטרית", "עסקת תשלומים (שיטרית)"
     ]
 }
 
@@ -214,15 +216,19 @@ def categorize_transaction(business_name: str) -> str:
     Assigns category based on smart keyword matching.
     Supports regular and visual-RTL reversed Hebrew text.
     Explicitly prioritizes:
+      - 'שלומי בן שיטרית' -> Utilities & Bills
+      - 'פי הקריון בע' -> Shopping
+      - 'PAYPAL PIITEL' -> Shopping
+      - 'בהצדעה' -> Shopping
       - 'מכבי חיפה (איצטדיון)' / 'איצטדיון' -> Entertainment
       - 'שדה תעופה' -> Utilities & Bills
       - 'ביליבונג' -> Shopping
       - 'LIME PAYOFF TDA7' / 'lime' -> Transportation
       - 'domo' / 'קפה' / 'הפק' -> Restaurants
-    Defaults to 'Uncategorized'.
+    Defaults to 'Shopping' (eliminating Uncategorized).
     """
     if not business_name or pd.isna(business_name):
-        return "Uncategorized"
+        return "Shopping"
 
     text = str(business_name).lower().strip()
 
@@ -231,11 +237,19 @@ def categorize_transaction(business_name: str) -> str:
         return "Entertainment"
     if "שדה תעופה" in text or "הפועת הדש" in text or "נתבג" in text or "נתב\"ג" in text:
         return "Utilities & Bills"
+    if "שיטרית" in text or "שטרית" in text or "שלומי" in text:
+        return "Utilities & Bills"
+    if "קריון" in text or "פי הקריון" in text or "ןוירק" in text:
+        return "Shopping"
+    if "piitel" in text or "פייטל" in text:
+        return "Shopping"
+    if "בהצדעה" in text or "העדצהב" in text:
+        return "Shopping"
     if "ביליבונג" in text or "גנוביליב" in text or "billabong" in text:
         return "Shopping"
     if "lime" in text or "לייל" in text or "ליים" in text:
         return "Transportation"
-    if "domo" in text or "קפה" in text or "הפק" in text:
+    if "domo" in text or "קפה" in text or "הפק" in text or "rebar" in text or "רי באר" in text:
         return "Restaurants"
 
     # Normalize punctuation into spaces for clean tokenization
@@ -262,7 +276,7 @@ def categorize_transaction(business_name: str) -> str:
                 if kw_reversed and (kw_reversed in text or any(kw_reversed in tok for tok in tokens)):
                     return category
 
-    return "Uncategorized"
+    return "Shopping"
 
 
 def parse_max_excel(file_content) -> pd.DataFrame:

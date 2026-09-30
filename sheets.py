@@ -133,7 +133,7 @@ def fetch_master_data():
     df["Type"] = df["Type"].astype(str).str.strip().str.capitalize()
     # Normalize Type to Income / Expense
     df["Type"] = df["Type"].apply(lambda t: "Income" if "inc" in t.lower() or "הכנסה" in t else "Expense")
-    df["Category"] = df["Category"].fillna("Uncategorized").astype(str).str.strip()
+    df["Category"] = df["Category"].fillna("Shopping").astype(str).str.strip()
     df["Business Name"] = df["Business Name"].fillna("").astype(str).str.strip()
     df["Notes"] = df["Notes"].fillna("").astype(str).str.strip()
 
@@ -157,7 +157,7 @@ def append_transactions(new_df: pd.DataFrame):
             clean_new.append({
                 "Date": date_str,
                 "Business Name": str(row.get("Business Name", "")).strip(),
-                "Category": str(row.get("Category", "Uncategorized")).strip(),
+                "Category": str(row.get("Category", "Shopping")).strip(),
                 "Type": str(row.get("Type", "Expense")).strip().capitalize(),
                 "Amount": round(float(row.get("Amount", 0.0)), 2),
                 "Notes": str(row.get("Notes", "")).strip() if pd.notna(row.get("Notes")) else ""
@@ -172,7 +172,7 @@ def append_transactions(new_df: pd.DataFrame):
             dt = row.get("Date")
             date_str = dt.strftime("%Y-%m-%d") if isinstance(dt, (datetime, pd.Timestamp)) else str(dt)
             b_name = str(row.get("Business Name", "")).strip()
-            cat = str(row.get("Category", "Uncategorized")).strip()
+            cat = str(row.get("Category", "Shopping")).strip()
             t_type = str(row.get("Type", "Expense")).strip().capitalize()
             amount = float(row.get("Amount", 0.0))
             notes = str(row.get("Notes", "")).strip() if pd.notna(row.get("Notes")) else ""
@@ -224,7 +224,7 @@ def overwrite_master_data(df: pd.DataFrame):
                 date_str = str(dt) if pd.notna(dt) else ""
 
             b_name = str(row.get("Business Name", "")).strip()
-            cat = str(row.get("Category", "Uncategorized")).strip()
+            cat = str(row.get("Category", "Shopping")).strip()
             t_type = str(row.get("Type", "Expense")).strip().capitalize()
             try:
                 amount = float(row.get("Amount", 0.0))

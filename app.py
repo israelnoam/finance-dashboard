@@ -341,11 +341,15 @@ def format_currency(amount: float) -> str:
 def migrate_category_record(row):
     """
     Migrates categories and enforces specific merchant categorizations:
+      - 'שלומי בן שיטרית' -> Utilities & Bills
+      - 'פי הקריון בע' -> Shopping
+      - 'PAYPAL PIITEL' -> Shopping
+      - 'בהצדעה' -> Shopping
       - 'מכבי חיפה (איצטדיון)' / 'איצטדיון' -> Entertainment
       - 'שדה תעופה' -> Utilities & Bills
       - 'ביליבונג' -> Shopping
       - 'LIME PAYOFF TDA7' / 'lime' -> Transportation
-      - Replaces legacy 'Shopping & Going Out' and 'Entertainment & Subs' with Shopping, Restaurants, Entertainment
+      - Replaces legacy 'Shopping & Going Out', 'Entertainment & Subs', and 'Uncategorized' with Shopping, Restaurants, Entertainment, Utilities & Bills
     """
     bname = str(row.get("Business Name", "")).strip()
     cat = str(row.get("Category", "")).strip()
@@ -355,14 +359,22 @@ def migrate_category_record(row):
         return "Entertainment"
     if "שדה תעופה" in b_lower or "נתבג" in b_lower or "נתב\"ג" in b_lower:
         return "Utilities & Bills"
+    if "שיטרית" in b_lower or "שטרית" in b_lower or "שלומי" in b_lower:
+        return "Utilities & Bills"
+    if "קריון" in b_lower or "פי הקריון" in b_lower:
+        return "Shopping"
+    if "piitel" in b_lower or "פייטל" in b_lower:
+        return "Shopping"
+    if "בהצדעה" in b_lower:
+        return "Shopping"
     if "ביליבונג" in b_lower or "billabong" in b_lower:
         return "Shopping"
     if "lime" in b_lower:
         return "Transportation"
 
-    if cat in ["Shopping & Going Out", "Entertainment & Subs", "Going Out", "Education & Kids"]:
+    if cat in ["Shopping & Going Out", "Entertainment & Subs", "Going Out", "Education & Kids", "Uncategorized", "", "None", "nan"]:
         new_cat = parsers.categorize_transaction(bname)
-        if new_cat != "Uncategorized":
+        if new_cat and new_cat != "Uncategorized":
             return new_cat
         if cat == "Entertainment & Subs":
             return "Entertainment"
@@ -471,7 +483,7 @@ def show_transaction_center_dialog(df_current_cycle: pd.DataFrame, is_demo_mode:
     """
     tabs = st.tabs(["💰 Income Table", "💳 Expense Table", "✍️ Manual Entry Form", "📥 Import Statements"])
 
-    category_options = list(parsers.CATEGORY_KEYWORDS.keys()) + ["Uncategorized", "Salary", "Investment Fund", "Other"]
+    category_options = list(parsers.CATEGORY_KEYWORDS.keys()) + ["Salary", "Investment Fund", "Other"]
     cols_to_keep = ["Date", "Business Name", "Category", "Type", "Amount", "Notes"]
 
     # Tab 1: Income Table
@@ -612,7 +624,7 @@ def show_transaction_center_dialog(df_current_cycle: pd.DataFrame, is_demo_mode:
                 manual_business = st.text_input("Expense Description", placeholder="e.g. Shufersal, Aroma, Salary")
                 manual_type = st.selectbox("Type", ["Expense", "Income"], index=0)
             with col2:
-                categories = list(parsers.CATEGORY_KEYWORDS.keys()) + ["Uncategorized", "Salary", "Investment Fund", "Other"]
+                categories = list(parsers.CATEGORY_KEYWORDS.keys()) + ["Salary", "Investment Fund", "Other"]
                 manual_category = st.selectbox("Category", sorted(list(set(categories))), index=0)
                 manual_amount = st.number_input("Amount (₪)", min_value=0.01, step=10.0, format="%.2f")
                 manual_notes = st.text_input("Notes", placeholder="Optional remarks...")
@@ -679,9 +691,9 @@ def show_transaction_center_dialog(df_current_cycle: pd.DataFrame, is_demo_mode:
 
         if st.session_state.get("parsed_staging_df") is not None and not st.session_state["parsed_staging_df"].empty:
             st.markdown("##### Review & Edit Grid")
-            st.info("💡 Review and fix 'Uncategorized' entries or edit values before syncing:")
+            st.info("💡 Review and verify categories or edit values before syncing:")
 
-            category_options = list(parsers.CATEGORY_KEYWORDS.keys()) + ["Uncategorized", "Salary", "Investment Fund", "Other"]
+            category_options = list(parsers.CATEGORY_KEYWORDS.keys()) + ["Salary", "Investment Fund", "Other"]
             type_options = ["Expense", "Income"]
 
             edited_df = st.data_editor(
@@ -1343,8 +1355,8 @@ def render_market_insights_tab():
                 buttons_html = get_post_buttons_html(post)
 
                 card_html = f"""
-                <div class="insight-card">
-                    <div class="insight-header">
+                <div class="insight-card" dir="rtl" style="direction: rtl !important; text-align: right !important;">
+                    <div class="insight-header" dir="rtl" style="direction: rtl !important;">
                         <span class="insight-badge-fibi">📊 FIBI Investment</span>
                         <span class="insight-date">{post_date}</span>
                     </div>
@@ -1488,8 +1500,8 @@ def render_market_insights_tab():
                 buttons_html = get_post_buttons_html(post)
 
                 card_html = f"""
-                <div class="insight-card">
-                    <div class="insight-header">
+                <div class="insight-card" dir="rtl" style="direction: rtl !important; text-align: right !important;">
+                    <div class="insight-header" dir="rtl" style="direction: rtl !important;">
                         <span class="{badge_class}">🏷️ {brand}</span>
                         <span class="insight-date">{post_date}</span>
                     </div>
@@ -1594,7 +1606,7 @@ def main():
         <div class="dashboard-header">
             <div>
                 <h1 class="dashboard-title">⚡ Financial Dashboard</h1>
-                <div class="dashboard-subtitle">Personal Finance Analytics • Google Sheets Integration • Live RTL & Bullets Sync</div>
+                <div class="dashboard-subtitle">Personal Finance Analytics • Google Sheets Integration • Updated Categories & RTL Sync</div>
             </div>
         </div>
     """, unsafe_allow_html=True)
@@ -1937,7 +1949,7 @@ def main():
                 <div class="kpi-card kpi-income">
                     <div class="kpi-label">
                         <span style="display:inline-flex; align-items:center; gap:6px;">
-                            <span class="kpi-bullet" style="display:inline-block !important; width:9px !important; height:9px !important; min-width:9px !important; min-height:9px !important; border-radius:50% !important; background-color:#10b981 !important; box-shadow: 0 0 8px #10b981 !important; flex-shrink:0 !important;"></span>
+                            <span style="color:#10b981; font-size:1.15rem; line-height:1; text-shadow:0 0 8px #10b981; display:inline-block; flex-shrink:0;">●</span>
                             Total Income
                         </span>
                         <span>⬆</span>
@@ -1948,7 +1960,7 @@ def main():
                 <div class="kpi-card kpi-expense">
                     <div class="kpi-label">
                         <span style="display:inline-flex; align-items:center; gap:6px;">
-                            <span class="kpi-bullet" style="display:inline-block !important; width:9px !important; height:9px !important; min-width:9px !important; min-height:9px !important; border-radius:50% !important; background-color:#f43f5e !important; box-shadow: 0 0 8px #f43f5e !important; flex-shrink:0 !important;"></span>
+                            <span style="color:#f43f5e; font-size:1.15rem; line-height:1; text-shadow:0 0 8px #f43f5e; display:inline-block; flex-shrink:0;">●</span>
                             Total Expenses
                         </span>
                         <span>⬇</span>
@@ -1959,7 +1971,7 @@ def main():
                 <div class="kpi-card {net_card_class}">
                     <div class="kpi-label">
                         <span style="display:inline-flex; align-items:center; gap:6px;">
-                            <span class="kpi-bullet" style="display:inline-block !important; width:9px !important; height:9px !important; min-width:9px !important; min-height:9px !important; border-radius:50% !important; background-color:{net_bullet_color} !important; box-shadow: 0 0 8px {net_bullet_color} !important; flex-shrink:0 !important;"></span>
+                            <span style="color:{net_bullet_color}; font-size:1.15rem; line-height:1; text-shadow:0 0 8px {net_bullet_color}; display:inline-block; flex-shrink:0;">●</span>
                             Net Flow
                         </span>
                         <span>{'⚖' if net_flow >= 0 else '⚠'}</span>
