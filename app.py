@@ -1967,12 +1967,22 @@ def main():
                     # Map each category to a distinct color
                     cat_color_map = {row["Category"]: classic_palette[i % len(classic_palette)] for i, row in cat_summary.iterrows()}
 
-                    # --- TOP 1-TAP CATEGORY PILLS SELECTOR (BREAKDOWN + FILTER) ---
+                    # Active category validation
                     active_cat = st.session_state.get("drilldown_category")
                     if active_cat and active_cat not in cat_summary["Category"].values:
                         active_cat = None
                         st.session_state["drilldown_category"] = None
 
+                    # --- CENTERED DONUT CHART (Native SVG - 0 MB JS, Instant Mobile Rendering) ---
+                    st.markdown("<div class='chart-box' style='padding: 0.8rem 0.5rem 0.7rem 0.5rem;'>", unsafe_allow_html=True)
+                    st.markdown(f"<h4 style='margin-top:0; margin-bottom:0.2rem; font-size:1.05rem; color:{chart_title_color}; text-align:center;'>🍩 Expense Distribution</h4>", unsafe_allow_html=True)
+
+                    # 100% Native vector SVG chart: 1.1 KB payload, zero Javascript chunks, zero TypeError import failures
+                    donut_svg_html = render_svg_donut(cat_summary, cat_color_map, expense_total, is_dark=is_dark)
+                    st.markdown(donut_svg_html, unsafe_allow_html=True)
+                    st.markdown("</div>", unsafe_allow_html=True)
+
+                    # --- INTERACTIVE 1-TAP CATEGORY PILLS (AT BOTTOM OF CHART) ---
                     cat_options = ["🌟 All"] + list(cat_summary["Category"].unique())
                     target_pill = active_cat if active_cat else "🌟 All"
 
@@ -1984,12 +1994,12 @@ def main():
                     def format_pill_label(opt):
                         return pill_display_map.get(opt, str(opt))
 
-                    pill_key = "cat_pills_mobile"
+                    pill_key = "cat_pills_bottom"
                     # Synchronize pill widget state before instantiation
                     if pill_key in st.session_state and st.session_state[pill_key] != target_pill:
                         st.session_state[pill_key] = target_pill
 
-                    st.markdown("<div style='margin-top:0.3rem; margin-bottom: 0.5rem;'><span style='font-size:0.88rem; font-weight:600; color:#94a3b8;'>🏷️ Spending Breakdown & Filter (Tap to isolate):</span></div>", unsafe_allow_html=True)
+                    st.markdown("<div style='text-align:center; margin-top:0.3rem; margin-bottom:0.3rem;'><span style='font-size:0.84rem; font-weight:600; color:#94a3b8;'>🏷️ Tap any category below to isolate & view details:</span></div>", unsafe_allow_html=True)
 
                     selected_pill = st.pills(
                         "Category Filter",
@@ -2001,38 +2011,11 @@ def main():
                     )
 
                     # Detect pill change immediately
-                    if selected_pill and selected_pill != target_pill:
-                        st.session_state["drilldown_category"] = None if selected_pill == "🌟 All" else selected_pill
-                        st.rerun()
-
-                    # --- CENTERED DONUT CHART (Native SVG - 0 MB JS, Instant Mobile Rendering) ---
-                    st.markdown("<div class='chart-box' style='padding: 0.8rem 0.5rem 0.7rem 0.5rem;'>", unsafe_allow_html=True)
-                    st.markdown(f"<h4 style='margin-top:0; margin-bottom:0.2rem; font-size:1.05rem; color:{chart_title_color}; text-align:center;'>🍩 Expense Distribution</h4>", unsafe_allow_html=True)
-
-                    # 100% Native vector SVG chart: 1.1 KB payload, zero Javascript chunks, zero TypeError import failures
-                    donut_svg_html = render_svg_donut(cat_summary, cat_color_map, expense_total, is_dark=is_dark)
-                    st.markdown(donut_svg_html, unsafe_allow_html=True)
-
-                    # Category Share Breakdown Badges (clean inline HTML without leading indent)
-                    chips_parts = ["<div style='display:flex; flex-wrap:wrap; justify-content:center; gap:0.4rem; margin-top:0.3rem; margin-bottom:0.1rem;'>"]
-                    for _, r in cat_summary.iterrows():
-                        c_name = r["Category"]
-                        c_col = cat_color_map.get(c_name, "#3b82f6")
-                        c_amt = r["Amount"]
-                        c_pct = r["Pct"]
-                        is_active_chip = (c_name == active_cat)
-                        border_css = f"border: 2px solid {c_col}; background: rgba(59,130,246,0.15);" if is_active_chip else "border: 1px solid rgba(255,255,255,0.08); background: rgba(255,255,255,0.02);"
-                        chips_parts.append(
-                            f'<div style="{border_css} border-radius: 20px; padding: 0.25rem 0.65rem; display: inline-flex; align-items: center; gap: 0.35rem; font-size: 0.8rem;">'
-                            f'<span style="display:inline-block; width:8px; height:8px; border-radius:50%; background-color:{c_col};"></span>'
-                            f'<span style="color:{chart_title_color}; font-weight:600;">{c_name}</span>'
-                            f'<span style="color:{c_col}; font-weight:700; font-family:\'JetBrains Mono\',monospace;">₪{c_amt:,.0f}</span>'
-                            f'<span style="color:#94a3b8; font-size:0.74rem;">({c_pct:.0f}%)</span>'
-                            f'</div>'
-                        )
-                    chips_parts.append("</div>")
-                    st.markdown("".join(chips_parts), unsafe_allow_html=True)
-                    st.markdown("</div>", unsafe_allow_html=True)
+                    if selected_pill != target_pill:
+                        new_drilldown = None if (selected_pill == "🌟 All" or selected_pill is None) else selected_pill
+                        if new_drilldown != active_cat:
+                            st.session_state["drilldown_category"] = new_drilldown
+                            st.rerun()
 
                     # --- ISOLATED CATEGORY DRILLDOWN TABLE & CARDS ---
                     req_cols = ["Date", "Business Name", "Category", "Amount", "Type", "Notes"]

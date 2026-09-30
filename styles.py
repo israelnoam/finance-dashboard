@@ -399,6 +399,22 @@ def get_custom_css(theme: str = "dark") -> str:
             box-shadow: {card_shadow};
         }}
 
+        /* Streamlit Category Pills Centered & Touch-Friendly */
+        div[data-testid="stPills"] {{
+            display: flex !important;
+            justify-content: center !important;
+            flex-wrap: wrap !important;
+            gap: 0.45rem !important;
+            margin-top: 0.2rem !important;
+            margin-bottom: 0.4rem !important;
+        }}
+        div[data-testid="stPills"] button {{
+            border-radius: 20px !important;
+            font-size: 0.82rem !important;
+            padding: 0.28rem 0.75rem !important;
+            transition: all 0.15s ease-in-out !important;
+        }}
+
         /* Mobile Viewport Optimizations (max-width: 768px) */
         @media screen and (max-width: 768px) {{
             .dashboard-header {{

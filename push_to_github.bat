@@ -12,9 +12,9 @@ echo.
 set /p GITHUB_TOKEN="Enter your GitHub Personal Access Token (or press Enter to try default): "
 
 if "%GITHUB_TOKEN%"=="" (
-    .\mingit\cmd\git.exe push -u origin main
+    .\mingit\cmd\git.exe push -u origin main --force
 ) else (
-    .\mingit\cmd\git.exe push -u https://%GITHUB_TOKEN%@github.com/israelnoam/finance-dashboard.git main
+    .\mingit\cmd\git.exe push -u https://%GITHUB_TOKEN%@github.com/israelnoam/finance-dashboard.git main --force
 )
 
 echo.
