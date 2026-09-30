@@ -1559,7 +1559,7 @@ def main():
         <div class="dashboard-header">
             <div>
                 <h1 class="dashboard-title">⚡ Financial Dashboard</h1>
-                <div class="dashboard-subtitle">Personal Finance Analytics • Google Sheets Integration</div>
+                <div class="dashboard-subtitle">Personal Finance Analytics • Google Sheets Integration • Live Sync</div>
             </div>
         </div>
     """, unsafe_allow_html=True)
@@ -1993,10 +1993,29 @@ def main():
                     # Label formatter map: stable option keys, rich display text
                     pill_display_map = {"🌟 All": "🌟 All"}
                     for _, row in cat_summary.iterrows():
-                        pill_display_map[row["Category"]] = f"{row['Category']} • ₪{row['Amount']:,.0f} ({row['Pct']:.0f}%)"
+                        pill_display_map[row["Category"]] = f"{row['Category']}  ₪{row['Amount']:,.0f} ({row['Pct']:.0f}%)"
 
                     def format_pill_label(opt):
                         return pill_display_map.get(opt, str(opt))
+
+                    # Inject dynamic CSS rules so each category pill has a glowing bullet matching its slice in the pie diagram
+                    pill_bullet_rules = []
+                    for idx, (_, row) in enumerate(cat_summary.iterrows(), start=2):
+                        c_col = cat_color_map.get(row["Category"], "#3b82f6")
+                        pill_bullet_rules.append(
+                            f"div.st-key-{pill_key} button:nth-of-type({idx})::before, "
+                            f"div[data-testid='stPills'] button:nth-of-type({idx})::before {{"
+                            f"content: '' !important; display: inline-block !important; width: 9px !important; "
+                            f"height: 9px !important; border-radius: 50% !important; background-color: {c_col} !important; "
+                            f"margin-right: 6px !important; flex-shrink: 0 !important; box-shadow: 0 0 6px {c_col}cc !important; "
+                            f"}} "
+                            f"div.st-key-{pill_key} button:nth-of-type({idx})[aria-selected='true'], "
+                            f"div[data-testid='stPills'] button:nth-of-type({idx})[aria-selected='true'] {{"
+                            f"border: 1.5px solid {c_col} !important; background: {c_col}26 !important; box-shadow: 0 0 10px {c_col}55 !important; "
+                            f"}}"
+                        )
+                    if pill_bullet_rules:
+                        st.markdown(f"<style>{''.join(pill_bullet_rules)}</style>", unsafe_allow_html=True)
 
                     st.markdown("<div style='text-align:center; margin-top:0.3rem; margin-bottom:0.3rem;'><span style='font-size:0.84rem; font-weight:600; color:#94a3b8;'>🏷️ Tap any category below to isolate & view details:</span></div>", unsafe_allow_html=True)
 

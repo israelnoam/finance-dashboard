@@ -423,6 +423,9 @@ def get_custom_css(theme: str = "dark") -> str:
             font-size: 0.82rem !important;
             padding: 0.28rem 0.75rem !important;
             transition: all 0.15s ease-in-out !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
         }}
 
         /* Mobile Viewport Optimizations (max-width: 768px) */
