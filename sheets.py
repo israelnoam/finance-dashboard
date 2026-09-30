@@ -114,8 +114,8 @@ def fetch_master_data():
         if col not in df.columns:
             df[col] = ""
 
-    # Clean and standardize types
-    df["Date_Clean"] = pd.to_datetime(df["Date"], errors="coerce")
+    # Clean and standardize types (enforce dayfirst=True for DD/MM/YYYY formats)
+    df["Date_Clean"] = pd.to_datetime(df["Date"], dayfirst=True, errors="coerce")
     
     # Normalize Amount to float
     def clean_amount(val):

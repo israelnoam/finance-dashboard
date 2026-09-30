@@ -357,7 +357,7 @@ def get_demo_data():
         {"Date": date(today.year, today.month, 7).strftime("%Y-%m-%d"), "Business Name": "פנגו כחול לבן", "Category": "Transportation", "Type": "Expense", "Amount": 32.50, "Notes": "Parking"},
     ]
     df = pd.DataFrame(data)
-    df["Date_Clean"] = pd.to_datetime(df["Date"], errors="coerce")
+    df["Date_Clean"] = pd.to_datetime(df["Date"], dayfirst=True, errors="coerce")
     return df
 
 
@@ -490,7 +490,7 @@ def show_transaction_center_dialog(df_current_cycle: pd.DataFrame, is_demo_mode:
                 clean_full = pd.concat([remaining_full[cols_to_keep], new_inc_rows[cols_to_keep]], ignore_index=True)
 
                 if is_demo_mode:
-                    clean_full["Date_Clean"] = pd.to_datetime(clean_full["Date"], errors="coerce")
+                    clean_full["Date_Clean"] = pd.to_datetime(clean_full["Date"], dayfirst=True, errors="coerce")
                     st.session_state["demo_df"] = clean_full
                     st.success("✅ [DEMO MODE] Income table updated successfully!")
                     st.rerun()
@@ -553,7 +553,7 @@ def show_transaction_center_dialog(df_current_cycle: pd.DataFrame, is_demo_mode:
                 clean_full = pd.concat([remaining_full[cols_to_keep], new_exp_rows[cols_to_keep]], ignore_index=True)
 
                 if is_demo_mode:
-                    clean_full["Date_Clean"] = pd.to_datetime(clean_full["Date"], errors="coerce")
+                    clean_full["Date_Clean"] = pd.to_datetime(clean_full["Date"], dayfirst=True, errors="coerce")
                     st.session_state["demo_df"] = clean_full
                     st.success("✅ [DEMO MODE] Expense table updated successfully!")
                     st.rerun()
@@ -694,7 +694,7 @@ def show_transaction_center_dialog(df_current_cycle: pd.DataFrame, is_demo_mode:
                 if st.button("☁️ Sync to Database", type="primary", use_container_width=True):
                     if is_demo_mode:
                         staging_copy = edited_df[cols_to_keep].copy()
-                        staging_copy["Date_Clean"] = pd.to_datetime(staging_copy["Date"], errors="coerce")
+                        staging_copy["Date_Clean"] = pd.to_datetime(staging_copy["Date"], dayfirst=True, errors="coerce")
                         if "demo_df" in st.session_state:
                             st.session_state["demo_df"] = pd.concat([st.session_state["demo_df"], staging_copy], ignore_index=True)
                         st.success(f"[DEMO MODE] Appended {len(edited_df)} rows to preview dataset!")
@@ -1985,8 +1985,8 @@ def main():
                         return pill_display_map.get(opt, str(opt))
 
                     pill_key = "cat_pills_mobile"
-                    # Prevent StreamlitValueAssignmentError if options changed between cycles
-                    if pill_key in st.session_state and st.session_state[pill_key] not in cat_options:
+                    # Synchronize pill widget state before instantiation
+                    if pill_key in st.session_state and st.session_state[pill_key] != target_pill:
                         st.session_state[pill_key] = target_pill
 
                     st.markdown("<div style='margin-top:0.3rem; margin-bottom: 0.5rem;'><span style='font-size:0.88rem; font-weight:600; color:#94a3b8;'>🏷️ Spending Breakdown & Filter (Tap to isolate):</span></div>", unsafe_allow_html=True)
@@ -2003,8 +2003,6 @@ def main():
                     # Detect pill change immediately
                     if selected_pill and selected_pill != target_pill:
                         st.session_state["drilldown_category"] = None if selected_pill == "🌟 All" else selected_pill
-                        if "pie_chart_selection" in st.session_state:
-                            del st.session_state["pie_chart_selection"]
                         st.rerun()
 
                     # --- CENTERED DONUT CHART (Native SVG - 0 MB JS, Instant Mobile Rendering) ---
@@ -2074,10 +2072,6 @@ def main():
                         with col_clr1:
                             if st.button("✖ Show All Categories", key="btn_reset_cat_isolation", type="primary", use_container_width=True):
                                 st.session_state["drilldown_category"] = None
-                                if pill_key in st.session_state:
-                                    st.session_state[pill_key] = "🌟 All"
-                                if "pie_chart_selection" in st.session_state:
-                                    del st.session_state["pie_chart_selection"]
                                 st.rerun()
 
                         # Display complete transaction data via Mobile Cards and Full Data Table
