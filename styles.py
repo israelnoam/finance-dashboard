@@ -193,6 +193,15 @@ def get_custom_css(theme: str = "dark") -> str:
             justify-content: space-between;
         }}
 
+        .kpi-bullet {{
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 6px;
+            flex-shrink: 0;
+        }}
+
         .kpi-value {{
             font-size: 2rem;
             font-weight: 700;
@@ -325,8 +334,9 @@ def get_custom_css(theme: str = "dark") -> str:
             color: {text_primary};
             white-space: pre-wrap;
             word-break: break-word;
-            direction: rtl;
-            text-align: right;
+            direction: rtl !important;
+            text-align: right !important;
+            unicode-bidi: plaintext !important;
             margin: 0.5rem 0;
         }}
         .insight-footer {{
@@ -455,6 +465,9 @@ def get_custom_css(theme: str = "dark") -> str:
             }}
             .insight-body {{
                 font-size: 0.88rem !important;
+                direction: rtl !important;
+                text-align: right !important;
+                unicode-bidi: plaintext !important;
             }}
             /* Ensure buttons and inputs are easily tappable */
             .stButton > button {{

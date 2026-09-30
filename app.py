@@ -1313,7 +1313,7 @@ def render_market_insights_tab():
                         <span class="insight-badge-fibi">📊 FIBI Investment</span>
                         <span class="insight-date">{post_date}</span>
                     </div>
-                    <div class="insight-body">{post['text']}</div>
+                    <div class="insight-body" dir="rtl" style="direction: rtl !important; text-align: right !important; unicode-bidi: plaintext;">{post['text']}</div>
                     <div class="insight-footer">
                         <span>{views_count}</span>
                         <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
@@ -1458,7 +1458,7 @@ def render_market_insights_tab():
                         <span class="{badge_class}">🏷️ {brand}</span>
                         <span class="insight-date">{post_date}</span>
                     </div>
-                    <div class="insight-body">{post['text']}</div>
+                    <div class="insight-body" dir="rtl" style="direction: rtl !important; text-align: right !important; unicode-bidi: plaintext;">{post['text']}</div>
                     <div class="insight-footer">
                         <span>{views_count}</span>
                         <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
@@ -1900,7 +1900,10 @@ def main():
             <div class="kpi-container">
                 <div class="kpi-card kpi-income">
                     <div class="kpi-label">
-                        <span>Total Income</span>
+                        <span style="display:flex; align-items:center; gap:6px;">
+                            <span class="kpi-bullet" style="background-color:#10b981; box-shadow: 0 0 8px #10b981;"></span>
+                            Total Income
+                        </span>
                         <span>⬆</span>
                     </div>
                     <div class="kpi-value income">{format_currency(income_total)}</div>
@@ -1908,7 +1911,10 @@ def main():
                 </div>
                 <div class="kpi-card kpi-expense">
                     <div class="kpi-label">
-                        <span>Total Expenses</span>
+                        <span style="display:flex; align-items:center; gap:6px;">
+                            <span class="kpi-bullet" style="background-color:#f43f5e; box-shadow: 0 0 8px #f43f5e;"></span>
+                            Total Expenses
+                        </span>
                         <span>⬇</span>
                     </div>
                     <div class="kpi-value expense">{format_currency(expense_total)}</div>
@@ -1916,7 +1922,10 @@ def main():
                 </div>
                 <div class="kpi-card {net_card_class}">
                     <div class="kpi-label">
-                        <span>Net Flow</span>
+                        <span style="display:flex; align-items:center; gap:6px;">
+                            <span class="kpi-bullet" style="background-color:{'#38bdf8' if net_flow >= 0 else '#fb7185'}; box-shadow: 0 0 8px {'#38bdf8' if net_flow >= 0 else '#fb7185'};"></span>
+                            Net Flow
+                        </span>
                         <span>{'⚖' if net_flow >= 0 else '⚠'}</span>
                     </div>
                     <div class="kpi-value {net_class}">{format_currency(net_flow)}</div>
@@ -1967,12 +1976,6 @@ def main():
                     # Map each category to a distinct color
                     cat_color_map = {row["Category"]: classic_palette[i % len(classic_palette)] for i, row in cat_summary.iterrows()}
 
-                    # Active category validation
-                    active_cat = st.session_state.get("drilldown_category")
-                    if active_cat and active_cat not in cat_summary["Category"].values:
-                        active_cat = None
-                        st.session_state["drilldown_category"] = None
-
                     # --- CENTERED DONUT CHART (Native SVG - 0 MB JS, Instant Mobile Rendering) ---
                     st.markdown("<div class='chart-box' style='padding: 0.8rem 0.5rem 0.7rem 0.5rem;'>", unsafe_allow_html=True)
                     st.markdown(f"<h4 style='margin-top:0; margin-bottom:0.2rem; font-size:1.05rem; color:{chart_title_color}; text-align:center;'>🍩 Expense Distribution</h4>", unsafe_allow_html=True)
@@ -1984,7 +1987,8 @@ def main():
 
                     # --- INTERACTIVE 1-TAP CATEGORY PILLS (AT BOTTOM OF CHART) ---
                     cat_options = ["🌟 All"] + list(cat_summary["Category"].unique())
-                    target_pill = active_cat if active_cat else "🌟 All"
+                    pill_version = st.session_state.get("cat_pills_version", 0)
+                    pill_key = f"cat_pills_bottom_{pill_version}"
 
                     # Label formatter map: stable option keys, rich display text
                     pill_display_map = {"🌟 All": "🌟 All"}
@@ -1994,28 +1998,24 @@ def main():
                     def format_pill_label(opt):
                         return pill_display_map.get(opt, str(opt))
 
-                    pill_key = "cat_pills_bottom"
-                    # Synchronize pill widget state before instantiation
-                    if pill_key in st.session_state and st.session_state[pill_key] != target_pill:
-                        st.session_state[pill_key] = target_pill
-
                     st.markdown("<div style='text-align:center; margin-top:0.3rem; margin-bottom:0.3rem;'><span style='font-size:0.84rem; font-weight:600; color:#94a3b8;'>🏷️ Tap any category below to isolate & view details:</span></div>", unsafe_allow_html=True)
 
                     selected_pill = st.pills(
                         "Category Filter",
                         options=cat_options,
-                        default=target_pill,
-                        format_func=format_pill_label,
+                        default="🌟 All",
                         key=pill_key,
+                        format_func=format_pill_label,
                         label_visibility="collapsed"
                     )
 
-                    # Detect pill change immediately
-                    if selected_pill != target_pill:
-                        new_drilldown = None if (selected_pill == "🌟 All" or selected_pill is None) else selected_pill
-                        if new_drilldown != active_cat:
-                            st.session_state["drilldown_category"] = new_drilldown
-                            st.rerun()
+                    # Derive active category directly from the user's selected pill
+                    if selected_pill and selected_pill != "🌟 All":
+                        active_cat = selected_pill
+                        st.session_state["drilldown_category"] = selected_pill
+                    else:
+                        active_cat = None
+                        st.session_state["drilldown_category"] = None
 
                     # --- ISOLATED CATEGORY DRILLDOWN TABLE & CARDS ---
                     req_cols = ["Date", "Business Name", "Category", "Amount", "Type", "Notes"]
@@ -2054,6 +2054,7 @@ def main():
                         col_clr1, col_clr2 = st.columns([1.5, 3.5])
                         with col_clr1:
                             if st.button("✖ Show All Categories", key="btn_reset_cat_isolation", type="primary", use_container_width=True):
+                                st.session_state["cat_pills_version"] = st.session_state.get("cat_pills_version", 0) + 1
                                 st.session_state["drilldown_category"] = None
                                 st.rerun()
 
