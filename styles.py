@@ -194,12 +194,14 @@ def get_custom_css(theme: str = "dark") -> str:
         }}
 
         .kpi-bullet {{
-            display: inline-block;
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            margin-right: 6px;
-            flex-shrink: 0;
+            display: inline-block !important;
+            width: 9px !important;
+            height: 9px !important;
+            min-width: 9px !important;
+            min-height: 9px !important;
+            border-radius: 50% !important;
+            margin-right: 6px !important;
+            flex-shrink: 0 !important;
         }}
 
         .kpi-value {{
@@ -330,13 +332,13 @@ def get_custom_css(theme: str = "dark") -> str:
         }}
         .insight-body {{
             font-size: 0.92rem;
-            line-height: 1.55;
+            line-height: 1.6;
             color: {text_primary};
-            white-space: pre-wrap;
+            white-space: pre-wrap !important;
             word-break: break-word;
             direction: rtl !important;
             text-align: right !important;
-            unicode-bidi: plaintext !important;
+            unicode-bidi: embed !important;
             margin: 0.5rem 0;
         }}
         .insight-footer {{
@@ -468,9 +470,11 @@ def get_custom_css(theme: str = "dark") -> str:
             }}
             .insight-body {{
                 font-size: 0.88rem !important;
+                line-height: 1.6 !important;
                 direction: rtl !important;
                 text-align: right !important;
-                unicode-bidi: plaintext !important;
+                unicode-bidi: embed !important;
+                white-space: pre-wrap !important;
             }}
             /* Ensure buttons and inputs are easily tappable */
             .stButton > button {{

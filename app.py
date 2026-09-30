@@ -1313,7 +1313,7 @@ def render_market_insights_tab():
                         <span class="insight-badge-fibi">📊 FIBI Investment</span>
                         <span class="insight-date">{post_date}</span>
                     </div>
-                    <div class="insight-body" dir="rtl" style="direction: rtl !important; text-align: right !important; unicode-bidi: plaintext;">{post['text']}</div>
+                    <div class="insight-body" dir="rtl" style="direction: rtl !important; text-align: right !important; unicode-bidi: embed !important; white-space: pre-wrap !important;">{post['text']}</div>
                     <div class="insight-footer">
                         <span>{views_count}</span>
                         <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
@@ -1458,7 +1458,7 @@ def render_market_insights_tab():
                         <span class="{badge_class}">🏷️ {brand}</span>
                         <span class="insight-date">{post_date}</span>
                     </div>
-                    <div class="insight-body" dir="rtl" style="direction: rtl !important; text-align: right !important; unicode-bidi: plaintext;">{post['text']}</div>
+                    <div class="insight-body" dir="rtl" style="direction: rtl !important; text-align: right !important; unicode-bidi: embed !important; white-space: pre-wrap !important;">{post['text']}</div>
                     <div class="insight-footer">
                         <span>{views_count}</span>
                         <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
@@ -1559,7 +1559,7 @@ def main():
         <div class="dashboard-header">
             <div>
                 <h1 class="dashboard-title">⚡ Financial Dashboard</h1>
-                <div class="dashboard-subtitle">Personal Finance Analytics • Google Sheets Integration • Live Sync</div>
+                <div class="dashboard-subtitle">Personal Finance Analytics • Google Sheets Integration • Live RTL & Bullets Sync</div>
             </div>
         </div>
     """, unsafe_allow_html=True)
@@ -1896,12 +1896,13 @@ def main():
             else:
                 net_subtext = 'Savings positive' if net_flow >= 0 else 'Deficit in cycle'
 
+            net_bullet_color = '#38bdf8' if net_flow >= 0 else '#fb7185'
             kpi_html = f"""
             <div class="kpi-container">
                 <div class="kpi-card kpi-income">
                     <div class="kpi-label">
-                        <span style="display:flex; align-items:center; gap:6px;">
-                            <span class="kpi-bullet" style="background-color:#10b981; box-shadow: 0 0 8px #10b981;"></span>
+                        <span style="display:inline-flex; align-items:center; gap:6px;">
+                            <span class="kpi-bullet" style="display:inline-block !important; width:9px !important; height:9px !important; min-width:9px !important; min-height:9px !important; border-radius:50% !important; background-color:#10b981 !important; box-shadow: 0 0 8px #10b981 !important; flex-shrink:0 !important;"></span>
                             Total Income
                         </span>
                         <span>⬆</span>
@@ -1911,8 +1912,8 @@ def main():
                 </div>
                 <div class="kpi-card kpi-expense">
                     <div class="kpi-label">
-                        <span style="display:flex; align-items:center; gap:6px;">
-                            <span class="kpi-bullet" style="background-color:#f43f5e; box-shadow: 0 0 8px #f43f5e;"></span>
+                        <span style="display:inline-flex; align-items:center; gap:6px;">
+                            <span class="kpi-bullet" style="display:inline-block !important; width:9px !important; height:9px !important; min-width:9px !important; min-height:9px !important; border-radius:50% !important; background-color:#f43f5e !important; box-shadow: 0 0 8px #f43f5e !important; flex-shrink:0 !important;"></span>
                             Total Expenses
                         </span>
                         <span>⬇</span>
@@ -1922,8 +1923,8 @@ def main():
                 </div>
                 <div class="kpi-card {net_card_class}">
                     <div class="kpi-label">
-                        <span style="display:flex; align-items:center; gap:6px;">
-                            <span class="kpi-bullet" style="background-color:{'#38bdf8' if net_flow >= 0 else '#fb7185'}; box-shadow: 0 0 8px {'#38bdf8' if net_flow >= 0 else '#fb7185'};"></span>
+                        <span style="display:inline-flex; align-items:center; gap:6px;">
+                            <span class="kpi-bullet" style="display:inline-block !important; width:9px !important; height:9px !important; min-width:9px !important; min-height:9px !important; border-radius:50% !important; background-color:{net_bullet_color} !important; box-shadow: 0 0 8px {net_bullet_color} !important; flex-shrink:0 !important;"></span>
                             Net Flow
                         </span>
                         <span>{'⚖' if net_flow >= 0 else '⚠'}</span>
