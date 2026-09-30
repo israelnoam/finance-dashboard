@@ -1,5 +1,6 @@
 # Credentials and secrets
 token.json
+*secrets*.toml
 json/
 *.session
 *.session-journal
