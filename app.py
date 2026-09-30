@@ -2013,25 +2013,25 @@ def main():
                     donut_svg_html = render_svg_donut(cat_summary, cat_color_map, expense_total, is_dark=is_dark)
                     st.markdown(donut_svg_html, unsafe_allow_html=True)
 
-                    # Category Share Breakdown Badges
-                    chips_html = ["<div style='display:flex; flex-wrap:wrap; justify-content:center; gap:0.4rem; margin-top:0.3rem; margin-bottom:0.1rem;'>"]
+                    # Category Share Breakdown Badges (clean inline HTML without leading indent)
+                    chips_parts = ["<div style='display:flex; flex-wrap:wrap; justify-content:center; gap:0.4rem; margin-top:0.3rem; margin-bottom:0.1rem;'>"]
                     for _, r in cat_summary.iterrows():
                         c_name = r["Category"]
                         c_col = cat_color_map.get(c_name, "#3b82f6")
                         c_amt = r["Amount"]
                         c_pct = r["Pct"]
                         is_active_chip = (c_name == active_cat)
-                        border_css = f"border: 2px solid {c_col}; background: rgba(59,130,246,0.12);" if is_active_chip else f"border: 1px solid rgba(255,255,255,0.08); background: rgba(255,255,255,0.02);"
-                        chips_html.append(f"""
-                            <div style="{border_css} border-radius: 20px; padding: 0.25rem 0.65rem; display: flex; align-items: center; gap: 0.35rem; font-size: 0.8rem;">
-                                <span style="display:inline-block; width:8px; height:8px; border-radius:50%; background-color:{c_col};"></span>
-                                <span style="color:{chart_title_color}; font-weight:600;">{c_name}</span>
-                                <span style="color:{c_col}; font-weight:700; font-family:'JetBrains Mono',monospace;">₪{c_amt:,.0f}</span>
-                                <span style="color:#94a3b8; font-size:0.74rem;">({c_pct:.0f}%)</span>
-                            </div>
-                        """)
-                    chips_html.append("</div>")
-                    st.markdown("".join(chips_html), unsafe_allow_html=True)
+                        border_css = f"border: 2px solid {c_col}; background: rgba(59,130,246,0.15);" if is_active_chip else "border: 1px solid rgba(255,255,255,0.08); background: rgba(255,255,255,0.02);"
+                        chips_parts.append(
+                            f'<div style="{border_css} border-radius: 20px; padding: 0.25rem 0.65rem; display: inline-flex; align-items: center; gap: 0.35rem; font-size: 0.8rem;">'
+                            f'<span style="display:inline-block; width:8px; height:8px; border-radius:50%; background-color:{c_col};"></span>'
+                            f'<span style="color:{chart_title_color}; font-weight:600;">{c_name}</span>'
+                            f'<span style="color:{c_col}; font-weight:700; font-family:\'JetBrains Mono\',monospace;">₪{c_amt:,.0f}</span>'
+                            f'<span style="color:#94a3b8; font-size:0.74rem;">({c_pct:.0f}%)</span>'
+                            f'</div>'
+                        )
+                    chips_parts.append("</div>")
+                    st.markdown("".join(chips_parts), unsafe_allow_html=True)
                     st.markdown("</div>", unsafe_allow_html=True)
 
                     # --- ISOLATED CATEGORY DRILLDOWN TABLE & CARDS ---
@@ -2118,55 +2118,55 @@ def main():
                                 hide_index=True
                             )
                     else:
-                        with st.expander("📋 View All Current Cycle Transactions Table", expanded=False):
-                            tab_all_cards, tab_all_table = st.tabs(["📱 Transaction Feed (Mobile)", "📋 Full Data Table"])
-                            with tab_all_cards:
-                                for _, tx_row in filtered_df.iterrows():
-                                    tx_bname = tx_row.get("Business Name") or "Unspecified Merchant"
-                                    tx_amt = tx_row.get("Amount", 0.0)
-                                    tx_date = str(tx_row.get("Date", ""))
-                                    tx_cat = tx_row.get("Category", "General")
-                                    tx_notes = str(tx_row.get("Notes", "")).strip()
-                                    tx_type = str(tx_row.get("Type", "Expense"))
-                                    tx_color = "#10b981" if tx_type == "Income" else ("#f43f5e" if is_dark else "#dc2626")
+                        st.markdown("<h4 style='margin-top:1.2rem; margin-bottom:0.5rem; font-size:1.05rem;'>📋 All Current Cycle Transactions</h4>", unsafe_allow_html=True)
+                        tab_all_cards, tab_all_table = st.tabs(["📱 Transaction Feed (Mobile)", "📋 Full Data Table"])
+                        with tab_all_cards:
+                            for _, tx_row in filtered_df.iterrows():
+                                tx_bname = tx_row.get("Business Name") or "Unspecified Merchant"
+                                tx_amt = tx_row.get("Amount", 0.0)
+                                tx_date = str(tx_row.get("Date", ""))
+                                tx_cat = tx_row.get("Category", "General")
+                                tx_notes = str(tx_row.get("Notes", "")).strip()
+                                tx_type = str(tx_row.get("Type", "Expense"))
+                                tx_color = "#10b981" if tx_type == "Income" else ("#f43f5e" if is_dark else "#dc2626")
 
-                                    notes_html = f"<div style='font-size:0.8rem; color:{chart_font_color}; margin-top:3px;'>📝 {tx_notes}</div>" if tx_notes else ""
+                                notes_html = f"<div style='font-size:0.8rem; color:{chart_font_color}; margin-top:3px;'>📝 {tx_notes}</div>" if tx_notes else ""
 
-                                    card_item = f"""
-                                    <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; padding: 0.75rem 0.95rem; margin-bottom: 0.5rem;">
-                                        <div style="display:flex; justify-content:space-between; align-items:center;">
-                                            <span style="font-weight:600; font-size:0.95rem; color:{chart_title_color};">{tx_bname}</span>
-                                            <span style="font-family:'JetBrains Mono',monospace; font-weight:700; font-size:1.02rem; color:{tx_color};">₪{tx_amt:,.2f}</span>
-                                        </div>
-                                        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:0.35rem; font-size:0.8rem; color:{chart_font_color};">
-                                            <span>📅 {tx_date} • <span style="background:rgba(59,130,246,0.15); color:#60a5fa; padding:1px 6px; border-radius:4px; font-size:0.75rem;">{tx_cat}</span></span>
-                                            <span style="font-size:0.75rem;">{tx_type}</span>
-                                        </div>
-                                        {notes_html}
+                                card_item = f"""
+                                <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; padding: 0.75rem 0.95rem; margin-bottom: 0.5rem;">
+                                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                                        <span style="font-weight:600; font-size:0.95rem; color:{chart_title_color};">{tx_bname}</span>
+                                        <span style="font-family:'JetBrains Mono',monospace; font-weight:700; font-size:1.02rem; color:{tx_color};">₪{tx_amt:,.2f}</span>
                                     </div>
-                                    """
-                                    st.markdown(card_item, unsafe_allow_html=True)
-                            with tab_all_table:
-                                for c in req_cols:
-                                    if c not in filtered_df.columns:
-                                        filtered_df[c] = ""
-                                filtered_df["Amount"] = pd.to_numeric(filtered_df["Amount"], errors="coerce").fillna(0.0)
-                                filtered_df["Notes"] = filtered_df["Notes"].fillna("").astype(str)
-                                filtered_df["Business Name"] = filtered_df["Business Name"].fillna("Unspecified").astype(str)
+                                    <div style="display:flex; justify-content:space-between; align-items:center; margin-top:0.35rem; font-size:0.8rem; color:{chart_font_color};">
+                                        <span>📅 {tx_date} • <span style="background:rgba(59,130,246,0.15); color:#60a5fa; padding:1px 6px; border-radius:4px; font-size:0.75rem;">{tx_cat}</span></span>
+                                        <span style="font-size:0.75rem;">{tx_type}</span>
+                                    </div>
+                                    {notes_html}
+                                </div>
+                                """
+                                st.markdown(card_item, unsafe_allow_html=True)
+                        with tab_all_table:
+                            for c in req_cols:
+                                if c not in filtered_df.columns:
+                                    filtered_df[c] = ""
+                            filtered_df["Amount"] = pd.to_numeric(filtered_df["Amount"], errors="coerce").fillna(0.0)
+                            filtered_df["Notes"] = filtered_df["Notes"].fillna("").astype(str)
+                            filtered_df["Business Name"] = filtered_df["Business Name"].fillna("Unspecified").astype(str)
 
-                                st.dataframe(
-                                    filtered_df[req_cols],
-                                    use_container_width=True,
-                                    column_config={
-                                        "Date": st.column_config.TextColumn("Date", width="small"),
-                                        "Business Name": st.column_config.TextColumn("Expense Description", width="medium"),
-                                        "Category": st.column_config.TextColumn("Category", width="small"),
-                                        "Amount": st.column_config.NumberColumn("Amount (₪)", format="₪%.2f", width="small"),
-                                        "Type": st.column_config.TextColumn("Type", width="small"),
-                                        "Notes": st.column_config.TextColumn("Notes / Details", width="large")
-                                    },
-                                    hide_index=True
-                                )
+                            st.dataframe(
+                                filtered_df[req_cols],
+                                use_container_width=True,
+                                column_config={
+                                    "Date": st.column_config.TextColumn("Date", width="small"),
+                                    "Business Name": st.column_config.TextColumn("Expense Description", width="medium"),
+                                    "Category": st.column_config.TextColumn("Category", width="small"),
+                                    "Amount": st.column_config.NumberColumn("Amount (₪)", format="₪%.2f", width="small"),
+                                    "Type": st.column_config.TextColumn("Type", width="small"),
+                                    "Notes": st.column_config.TextColumn("Notes / Details", width="large")
+                                },
+                                hide_index=True
+                            )
 
     # Footer note
     st.markdown("""
