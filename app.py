@@ -338,6 +338,40 @@ def format_currency(amount: float) -> str:
     return f"₪{amount:,.2f}"
 
 
+def migrate_category_record(row):
+    """
+    Migrates categories and enforces specific merchant categorizations:
+      - 'מכבי חיפה (איצטדיון)' / 'איצטדיון' -> Entertainment
+      - 'שדה תעופה' -> Utilities & Bills
+      - 'ביליבונג' -> Shopping
+      - 'LIME PAYOFF TDA7' / 'lime' -> Transportation
+      - Replaces legacy 'Shopping & Going Out' and 'Entertainment & Subs' with Shopping, Restaurants, Entertainment
+    """
+    bname = str(row.get("Business Name", "")).strip()
+    cat = str(row.get("Category", "")).strip()
+    b_lower = bname.lower()
+
+    if "מכבי חיפה" in b_lower or "איצטדיון" in b_lower or "סמי עופר" in b_lower:
+        return "Entertainment"
+    if "שדה תעופה" in b_lower or "נתבג" in b_lower or "נתב\"ג" in b_lower:
+        return "Utilities & Bills"
+    if "ביליבונג" in b_lower or "billabong" in b_lower:
+        return "Shopping"
+    if "lime" in b_lower:
+        return "Transportation"
+
+    if cat in ["Shopping & Going Out", "Entertainment & Subs", "Going Out", "Education & Kids"]:
+        new_cat = parsers.categorize_transaction(bname)
+        if new_cat != "Uncategorized":
+            return new_cat
+        if cat == "Entertainment & Subs":
+            return "Entertainment"
+        if cat == "Going Out":
+            return "Restaurants"
+        return "Shopping"
+    return cat
+
+
 def get_demo_data():
     """Generates realistic demo transactions for preview."""
     today = date.today()
@@ -350,10 +384,10 @@ def get_demo_data():
         {"Date": date(prev_m.year, prev_m.month, 20).strftime("%Y-%m-%d"), "Business Name": "זארה קניון TLV", "Category": "Shopping", "Type": "Expense", "Amount": 389.90, "Notes": ""},
         {"Date": date(prev_m.year, prev_m.month, 24).strftime("%Y-%m-%d"), "Business Name": "חברת החשמל לישראל", "Category": "Utilities & Bills", "Type": "Expense", "Amount": 420.30, "Notes": "Bi-monthly electric bill"},
         {"Date": date(prev_m.year, prev_m.month, 27).strftime("%Y-%m-%d"), "Business Name": "סופר פארם", "Category": "Health & Pharmacy", "Type": "Expense", "Amount": 142.50, "Notes": ""},
-        {"Date": date(today.year, today.month, 2).strftime("%Y-%m-%d"), "Business Name": "Domo Espresso Bar", "Category": "Going Out", "Type": "Expense", "Amount": 65.00, "Notes": "Meeting coffee"},
+        {"Date": date(today.year, today.month, 2).strftime("%Y-%m-%d"), "Business Name": "Domo Espresso Bar", "Category": "Restaurants", "Type": "Expense", "Amount": 65.00, "Notes": "Meeting coffee"},
         {"Date": date(today.year, today.month, 3).strftime("%Y-%m-%d"), "Business Name": "מיטב דש קרן השתלמות", "Category": "Investment Fund", "Type": "Expense", "Amount": 1500.00, "Notes": "Monthly contribution"},
         {"Date": date(today.year, today.month, 4).strftime("%Y-%m-%d"), "Business Name": "רמי לוי שיווק השקמה", "Category": "Groceries", "Type": "Expense", "Amount": 645.20, "Notes": ""},
-        {"Date": date(today.year, today.month, 6).strftime("%Y-%m-%d"), "Business Name": "Netflix", "Category": "Entertainment & Subs", "Type": "Expense", "Amount": 54.90, "Notes": "Subscription"},
+        {"Date": date(today.year, today.month, 6).strftime("%Y-%m-%d"), "Business Name": "Netflix", "Category": "Entertainment", "Type": "Expense", "Amount": 54.90, "Notes": "Subscription"},
         {"Date": date(today.year, today.month, 7).strftime("%Y-%m-%d"), "Business Name": "פנגו כחול לבן", "Category": "Transportation", "Type": "Expense", "Amount": 32.50, "Notes": "Parking"},
     ]
     df = pd.DataFrame(data)
@@ -372,12 +406,13 @@ def show_quick_categorize_dialog(uncat_df: pd.DataFrame, full_df: pd.DataFrame, 
     st.caption(f"Resolve **{len(uncat_df)}** uncategorized transactions instantly with 1 tap:")
 
     quick_cats = [
-        ("🛍️ Shopping & Out", "Shopping & Going Out"),
+        ("🛍️ Shopping", "Shopping"),
+        ("🍽️ Restaurants", "Restaurants"),
+        ("🍿 Entertainment", "Entertainment"),
         ("🛒 Groceries", "Groceries"),
         ("🚗 Transport", "Transportation"),
         ("💡 Bills", "Utilities & Bills"),
         ("💊 Health", "Health & Pharmacy"),
-        ("🍿 Entertainment", "Entertainment & Subs"),
         ("🏷️ Other", "Other")
     ]
 
@@ -1763,7 +1798,7 @@ def main():
             if not raw_df.empty:
                 raw_df["_row_idx"] = list(range(len(raw_df)))
                 if "Category" in raw_df.columns:
-                    raw_df["Category"] = raw_df["Category"].replace({"Going Out": "Shopping & Going Out", "Shopping": "Shopping & Going Out", "Education & Kids": "Shopping & Going Out"})
+                    raw_df["Category"] = raw_df.apply(migrate_category_record, axis=1)
             else:
                 raw_df["_row_idx"] = []
 
@@ -1944,7 +1979,7 @@ def main():
 
             expense_sub_df = filtered_df[filtered_df["Type"] == "Expense"].copy()
             if not expense_sub_df.empty and "Category" in expense_sub_df.columns:
-                expense_sub_df["Category"] = expense_sub_df["Category"].replace({"Going Out": "Shopping & Going Out", "Shopping": "Shopping & Going Out", "Education & Kids": "Shopping & Going Out"})
+                expense_sub_df["Category"] = expense_sub_df.apply(migrate_category_record, axis=1)
 
             # Classic Executive Financial Color Palette
             classic_palette = [

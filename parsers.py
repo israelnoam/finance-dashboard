@@ -15,19 +15,31 @@ from bidi.algorithm import get_display
 
 # Keyword category mapping dictionary
 CATEGORY_KEYWORDS = {
-    "Shopping & Going Out": [
-        "קפה", "domo", "ארומה", "קפית", "גרג", "לנדוור", "rebar", "רולדין",
-        "מסעד", "בר", "פיצה", "בורגר", "שווארמה", "גולדה", "golda", "בייקרי",
-        "ביסטרו", "קפה קפה", "ארקפה", "arcaffe", "starbucks", "mcdonalds",
-        "מקדולנס", "wolt", "תן ביס", "10bis", "tabit", "ontopo", "פאב",
-        "חומוס", "מזנון", "סילבה", "פלפלת", "אספרסו", "mosh beach", "נולה סוקס",
-        "זארה", "zara", "castro", "קסטרו", "h&m", "pull&bear", "bershka",
+    "Shopping": [
+        "ביליבונג", "billabong", "זארה", "zara", "castro", "קסטרו", "h&m", "pull&bear", "bershka",
         "terminal x", "טרמינל", "asos", "amazon", "אמזון", "aliexpress",
         "shein", "עלי אקספרס", "nike", "adidas", "איקאה", "ikea", "ksp",
         "אייבורי", "ivory", "באג", "bug", "ace", "הום סנטר", "מגנוליה",
         "פול אנד בר", "חומרי בניי", "שזר", "אמריקן איגל", "american eagle",
         "נונה טכניון", "נונה", "טכניון", "ספרים", "סטימצקי", "צומת ספרים",
-        "גן", "צהרון", "מעון", "בית ספר", "חוג", "אוניברסיט", "מכללה"
+        "גן", "צהרון", "מעון", "בית ספר", "חוג", "אוניברסיט", "מכללה",
+        "בית הסטודנט", "סטודנט", "דלתא", "פוקס", "fox", "רנואר", "renuar"
+    ],
+    "Restaurants": [
+        "קפה", "domo", "ארומה", "קפית", "גרג", "לנדוור", "rebar", "רולדין",
+        "מסעד", "בר", "פיצה", "בורגר", "שווארמה", "גולדה", "golda", "בייקרי",
+        "ביסטרו", "קפה קפה", "ארקפה", "arcaffe", "starbucks", "mcdonalds",
+        "מקדולנס", "wolt", "תן ביס", "10bis", "tabit", "ontopo", "פאב",
+        "חומוס", "מזנון", "סילבה", "פלפלת", "אספרסו", "mosh beach", "נולה סוקס",
+        "ברדיצ'ב", "panda wok", "דומינוס", "ג'פניקה", "japanika", "מוזס", "bbb",
+        "אגאדיר", "סושי", "נודלס", "בלאק", "מאפיית", "לחם", "קונדיטוריה"
+    ],
+    "Entertainment": [
+        "מכבי חיפה (איצטדיון)", "מכבי חיפה", "איצטדיון", "סמי עופר",
+        "netflix", "spotify", "apple.com", "apple", "google", "youtube", "playstation",
+        "steam", "cinema", "קולנוע", "סינמה", "יס פלאנט", "yes planet",
+        "רב חן", "הוט סינמה", "תיאטרון", "הופעה", "זאפה", "zappa",
+        "מלביר", "אייר חיפה", "המבשלה", "חבר שלי", "כרטיסים", "אירוע", "הצגה"
     ],
     "Investment Fund": [
         "קרן השתלמות", "קופת גמל", "קרן נאמנות", "אינטראקטיב", "מיטב",
@@ -39,7 +51,7 @@ CATEGORY_KEYWORDS = {
         "yellow", "דלק", "סונול", "פז", "דור אלון", "מיקה", "ten",
         "רכבת", "אגד", "דן", "מטרופולין", "moovit", "רב קו", "rav kav",
         "gett", "yango", "uber", "חניון", "אחוזות החוף", "פנגו", "pango",
-        "סלופארק", "cellopark", "דרך ארץ", "כביש 6", "lime"
+        "סלופארק", "cellopark", "דרך ארץ", "כביש 6", "lime payoff tda7", "lime payoff", "lime"
     ],
     "Groceries": [
         "שופרסל", "רמי לוי", "יוחננוף", "אושר עד", "קרפור", "carrefour",
@@ -49,20 +61,14 @@ CATEGORY_KEYWORDS = {
     ],
     "Health & Pharmacy": [
         "סופר פארם", "סופר-פארם", "super-pharm", "be פארם", "ניו פארם",
-        "כללית", "מכבי", "מאוחדת", "לאומית", "בית מרקחת", "אופטיקה",
-        "רופא", "מרפאה", "דנטל", "שיניים", "שרותי בריאות"
+        "כללית", "מכבי שירותי בריאות", "קופת חולים מכבי", "מאוחדת", "לאומית",
+        "בית מרקחת", "אופטיקה", "רופא", "מרפאה", "דנטל", "שיניים", "שרותי בריאות"
     ],
     "Utilities & Bills": [
         "חברת החשמל", "חשמל", "ארנונה", "עיריית", "מים", "מי אביבים",
         "הוט", "hot", "יס", "yes", "בזק", "bezeq", "פרטנר", "partner",
         "סלקום", "cellcom", "פלאפון", "pelephone", "012", "019", "גז",
-        "היפרטרוניקס", "ביטוח", "מ.התחבורה"
-    ],
-    "Entertainment & Subs": [
-        "netflix", "spotify", "apple.com", "apple", "google", "youtube", "playstation",
-        "steam", "cinema", "קולנוע", "סינמה", "יס פלאנט", "yes planet",
-        "רב חן", "הוט סינמה", "תיאטרון", "הופעה", "זאפה", "zappa",
-        "מכבי חיפה", "מלביר", "אייר חיפה", "המבשלה", "חבר שלי"
+        "היפרטרוניקס", "ביטוח", "מ.התחבורה", "שדה תעופה", "נתבג", "נתב\"ג"
     ]
 }
 
@@ -207,7 +213,12 @@ def categorize_transaction(business_name: str) -> str:
     """
     Assigns category based on smart keyword matching.
     Supports regular and visual-RTL reversed Hebrew text.
-    Explicitly ensures 'Domo' and 'קפה' / 'הפק' map to 'Shopping & Going Out'.
+    Explicitly prioritizes:
+      - 'מכבי חיפה (איצטדיון)' / 'איצטדיון' -> Entertainment
+      - 'שדה תעופה' -> Utilities & Bills
+      - 'ביליבונג' -> Shopping
+      - 'LIME PAYOFF TDA7' / 'lime' -> Transportation
+      - 'domo' / 'קפה' / 'הפק' -> Restaurants
     Defaults to 'Uncategorized'.
     """
     if not business_name or pd.isna(business_name):
@@ -215,35 +226,17 @@ def categorize_transaction(business_name: str) -> str:
 
     text = str(business_name).lower().strip()
 
-    # Explicit high-priority rules
+    # Explicit high-priority specific rules
+    if "מכבי חיפה" in text or "איצטדיון" in text or "ןוידטציא" in text or "סמי עופר" in text:
+        return "Entertainment"
+    if "שדה תעופה" in text or "הפועת הדש" in text or "נתבג" in text or "נתב\"ג" in text:
+        return "Utilities & Bills"
+    if "ביליבונג" in text or "גנוביליב" in text or "billabong" in text:
+        return "Shopping"
+    if "lime" in text or "לייל" in text or "ליים" in text:
+        return "Transportation"
     if "domo" in text or "קפה" in text or "הפק" in text:
-        return "Shopping & Going Out"
-
-    # Normalize punctuation into spaces for clean tokenization
-    normalized_text = re.sub(r"[^\w\s]", " ", text)
-    tokens = normalized_text.split()
-
-    for category, keywords in CATEGORY_KEYWORDS.items():
-        for kw in keywords:
-            kw_clean = kw.lower().strip()
-            kw_reversed = kw_clean[::-1] if any("\u0590" <= c <= "\u05ea" for c in kw_clean) else None
-
-            # For short keywords (<= 3 chars, like 'בר', 'דן', 'פז', 'גן', 'ten'), require whole word token match
-            if len(kw_clean) <= 3:
-                hebrew_prefixes = ["", "ב", "ל", "מ", "ה", "כ", "ו"]
-                possible_variants = {prefix + kw_clean for prefix in hebrew_prefixes}
-                if kw_reversed:
-                    possible_variants.update({prefix + kw_reversed for prefix in hebrew_prefixes})
-                if any(tok in possible_variants for tok in tokens):
-                    return category
-            else:
-                # Longer keywords can match as substring or token match
-                if kw_clean in text or any(kw_clean in tok for tok in tokens):
-                    return category
-                if kw_reversed and (kw_reversed in text or any(kw_reversed in tok for tok in tokens)):
-                    return category
-
-    return "Uncategorized"
+        return "Restaurants"
 
     # Normalize punctuation into spaces for clean tokenization
     normalized_text = re.sub(r"[^\w\s]", " ", text)
